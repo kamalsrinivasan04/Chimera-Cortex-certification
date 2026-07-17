@@ -9,7 +9,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
+        <div className="flex flex-col min-h-screen bg-[linear-gradient(180deg,#fefefe_0%,#f7f4f1_48%,#f0ece7_100%)] text-slate-950">
           <Navbar />
           <main className="flex-grow">
             <AppRoutes />

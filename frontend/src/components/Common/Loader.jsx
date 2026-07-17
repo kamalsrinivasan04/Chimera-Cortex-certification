@@ -11,7 +11,7 @@ const Loader = ({ message = 'Loading...', fullScreen = false }) => {
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-slate-950 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-[linear-gradient(180deg,rgba(254,254,254,0.92)_0%,rgba(247,244,241,0.92)_48%,rgba(240,236,231,0.92)_100%)] backdrop-blur-sm flex items-center justify-center z-50">
         {content}
       </div>
     );

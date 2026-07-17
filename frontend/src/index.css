@@ -4,7 +4,12 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-primary-500 selection:text-white;
+    @apply font-sans antialiased selection:bg-primary-500 selection:text-white;
+    background:
+      radial-gradient(circle at top left, rgba(255, 138, 77, 0.16), transparent 28%),
+      radial-gradient(circle at top right, rgba(255, 74, 3, 0.12), transparent 24%),
+      linear-gradient(180deg, #fefefe 0%, #f7f4f1 48%, #f0ece7 100%);
+    color: #101010;
   }
 }
 
@@ -15,11 +20,12 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: #f1ece7;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+  @apply rounded-full transition-colors;
+  background: linear-gradient(180deg, #ff8b4d 0%, #ff4a03 100%);
 }
 
 /* Custom Typing Indicator Bounces */
@@ -46,7 +52,7 @@
 
 /* Glow effects */
 .glow-primary {
-  box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 40px -10px rgba(255, 106, 31, 0.22);
 }
 
 .glow-success {
