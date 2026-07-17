@@ -1,4 +1,5 @@
 import axios from 'axios';
+console.log("API URL:", import.meta.env.VITE_API_URL);
 
 // Create axios instance pointing to the API route (proxied by Vite)
 const api = axios.create({
