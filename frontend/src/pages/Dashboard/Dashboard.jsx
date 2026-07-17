@@ -36,19 +36,19 @@ const Dashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Upper header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/5 rounded-full blur-3xl -z-10"></div>
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center relative overflow-hidden shadow-[0_20px_60px_-30px_rgba(17,17,17,0.22)]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl -z-10"></div>
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Hello, {user.name}!</h1>
-          <p className="text-sm text-slate-400 max-w-xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950">Hello, {user.name}!</h1>
+          <p className="text-sm text-slate-600 max-w-xl">
             Welcome to the AI Adaptive Assessment portal. Track your dynamic skill verifications, view detailed evaluations, and download verified credentials.
           </p>
         </div>
 
         <button
           onClick={handleStartNewAssessment}
-          className="mt-6 sm:mt-0 flex items-center space-x-2 px-5 py-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-primary-600/10 active:scale-[0.98]"
+          className="mt-6 sm:mt-0 flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-primary-500/20 active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           <span>Start Assessment</span>
@@ -59,13 +59,13 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Attempts Table (Left/Center col span-2) */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-white flex items-center space-x-2">
+            <h2 className="text-lg font-bold text-slate-950 flex items-center space-x-2">
               <Award className="w-5 h-5 text-primary-500" />
               <span>Assessment History</span>
             </h2>
-            <span className="text-xs font-semibold px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-400 rounded-md">
+            <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded-md">
               {attempts.length} Attempt{attempts.length !== 1 ? 's' : ''}
             </span>
           </div>
@@ -78,11 +78,11 @@ const Dashboard = () => {
           )}
 
           {attempts.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-slate-800 rounded-xl space-y-4">
-              <p className="text-sm text-slate-500">You haven't attempted any certification assessments yet.</p>
+            <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl space-y-4 bg-slate-50/60">
+              <p className="text-sm text-slate-600">You haven't attempted any certification assessments yet.</p>
               <button
                 onClick={handleStartNewAssessment}
-                className="text-xs text-primary-400 font-semibold hover:underline flex items-center space-x-1 mx-auto"
+                className="text-xs text-primary-600 font-semibold hover:underline flex items-center space-x-1 mx-auto"
               >
                 <span>Click here to launch your first exam</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -90,7 +90,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-800 text-sm">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead>
                   <tr className="text-slate-500 font-semibold text-xs uppercase tracking-wider text-left">
                     <th className="pb-3 pr-4">Profile Details</th>
@@ -100,16 +100,16 @@ const Dashboard = () => {
                     <th className="pb-3 pl-4">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800 text-slate-300">
+                <tbody className="divide-y divide-slate-200 text-slate-700">
                   {attempts.map((att) => {
                     const isTerminated = att.status === 'terminated';
                     const isActive = att.status === 'active';
                     const isCompleted = att.status === 'completed';
                     
                     return (
-                      <tr key={att._id} className="hover:bg-slate-850/30 transition-colors">
+                      <tr key={att._id} className="hover:bg-primary-50/70 transition-colors">
                         <td className="py-4 pr-4">
-                          <div className="font-semibold text-white">{att.profile.jobRole}</div>
+                          <div className="font-semibold text-slate-950">{att.profile.jobRole}</div>
                           <div className="text-xs text-slate-500">{att.profile.certificationLevel} Level</div>
                         </td>
                         <td className="py-4 px-4 text-xs text-slate-400">
@@ -120,19 +120,19 @@ const Dashboard = () => {
                         </td>
                         <td className="py-4 px-4 text-center">
                           {isTerminated && (
-                            <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 bg-red-950/20 border border-red-900/50 text-red-400 rounded-full">
+                            <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 bg-red-50 border border-red-200 text-red-600 rounded-full">
                               <XCircle className="w-3 h-3" />
                               <span>Terminated</span>
                             </span>
                           )}
                           {isActive && (
-                            <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 bg-yellow-950/20 border border-yellow-900/50 text-yellow-400 rounded-full animate-pulse">
+                            <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full animate-pulse">
                               <AlertCircle className="w-3 h-3" />
                               <span>In Progress</span>
                             </span>
                           )}
                           {isCompleted && (
-                            <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 bg-green-950/20 border border-green-900/50 text-green-400 rounded-full">
+                            <span className="inline-flex items-center space-x-1 text-xs font-semibold px-2 py-0.5 bg-green-50 border border-green-200 text-green-700 rounded-full">
                               <CheckCircle2 className="w-3 h-3" />
                               <span>Completed</span>
                             </span>
@@ -140,18 +140,18 @@ const Dashboard = () => {
                         </td>
                         <td className="py-4 px-4 text-right font-mono font-bold">
                           {isCompleted && att.score !== null ? (
-                            <span className={att.score >= 70 ? 'text-green-400' : 'text-red-400'}>
+                            <span className={att.score >= 70 ? 'text-green-700' : 'text-red-600'}>
                               {att.score}%
                             </span>
                           ) : (
-                            <span className="text-slate-600">—</span>
+                            <span className="text-slate-400">—</span>
                           )}
                         </td>
                         <td className="py-4 pl-4 text-xs">
                           {isCompleted && (
                             <Link
                               to={`/results/${att._id}`}
-                              className="text-primary-400 font-bold hover:text-primary-300 hover:underline flex items-center space-x-0.5"
+                              className="text-primary-600 font-bold hover:text-primary-500 hover:underline flex items-center space-x-0.5"
                             >
                               <span>View Report</span>
                               <ArrowRight className="w-3.5 h-3.5" />
@@ -160,14 +160,14 @@ const Dashboard = () => {
                           {isActive && (
                             <Link
                               to={`/assessment?resume=${att._id}`}
-                              className="text-yellow-400 font-bold hover:text-yellow-300 hover:underline flex items-center space-x-0.5"
+                              className="text-amber-600 font-bold hover:text-amber-500 hover:underline flex items-center space-x-0.5"
                             >
                               <span>Resume</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
                           )}
                           {isTerminated && (
-                            <span className="text-slate-600 select-none">Disqualified</span>
+                            <span className="text-slate-400 select-none">Disqualified</span>
                           )}
                         </td>
                       </tr>
@@ -180,39 +180,39 @@ const Dashboard = () => {
         </div>
 
         {/* Credentials list (Right Column) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-green-500" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-950 flex items-center space-x-2">
+            <ShieldCheck className="w-5 h-5 text-primary-500" />
             <span>Earned Credentials</span>
           </h2>
           
           <div className="space-y-4">
             {attempts.filter(a => a.status === 'completed' && a.score >= 70).length === 0 ? (
-              <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl">
-                <p className="text-xs text-slate-500">No active certifications yet.</p>
-                <p className="text-[10px] text-slate-600 mt-1">Pass an assessment with &gt;= 70% score to generate.</p>
+              <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl bg-slate-50/60">
+                <p className="text-xs text-slate-600">No active certifications yet.</p>
+                <p className="text-[10px] text-slate-500 mt-1">Pass an assessment with &gt;= 70% score to generate.</p>
               </div>
             ) : (
               attempts.filter(a => a.status === 'completed' && a.score >= 70).map((att) => (
                 <div
                   key={att._id}
-                  className="bg-slate-950 border border-slate-800 hover:border-slate-700 p-4 rounded-xl flex flex-col justify-between space-y-4 transition-colors"
+                  className="bg-slate-50 border border-slate-200 hover:border-primary-200 p-4 rounded-xl flex flex-col justify-between space-y-4 transition-colors"
                 >
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-primary-500 tracking-wider">
+                    <span className="text-[10px] uppercase font-bold text-primary-600 tracking-wider">
                       {att.profile.certificationLevel} Certified
                     </span>
-                    <h3 className="text-sm font-semibold text-white leading-snug">
+                    <h3 className="text-sm font-semibold text-slate-950 leading-snug">
                       {att.profile.jobRole} Professional
                     </h3>
                     <div className="text-[10px] font-mono text-slate-500">ID: {att.certificateId || 'CERT-GENERATING'}</div>
                   </div>
                   
-                  <div className="flex justify-between items-center pt-2 border-t border-slate-900">
-                    <span className="text-xs text-slate-400 font-semibold">Grade: {att.score}%</span>
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                    <span className="text-xs text-slate-600 font-semibold">Grade: {att.score}%</span>
                     <Link
                       to={`/results/${att._id}`}
-                      className="text-xs font-bold text-primary-400 hover:underline"
+                      className="text-xs font-bold text-primary-600 hover:underline"
                     >
                       Verify & Download
                     </Link>

@@ -131,10 +131,10 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
       doc.fillColor('#475569')
          .font('Helvetica')
          .fontSize(12)
-         .text(`With an overall evaluated assessment score of `, 40, 360, { align: 'center', width: width - 80, continued: true })
-         .font('Helvetica-Bold')
-         .fillColor('#15803d') // green
-         .text(`${certificate.score}%`);
+             .text(`With an overall evaluated assessment score of ${certificate.score}%`, 40, 360, {
+                align: 'center',
+                width: width - 80,
+             });
 
       // ==========================================
       // FOOTER SECTION: SIGNATURE, QR CODE, DETAILS
