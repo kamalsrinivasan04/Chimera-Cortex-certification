@@ -26,7 +26,7 @@ const Navbar = () => {
             />
             <span className="flex flex-col leading-none">
               <span className="font-bold text-lg tracking-wider text-slate-900">
-                C<sup>3</sup>AB
+                C<sup>3</sup>AB Certify
               </span>
               <span className="text-[10px] uppercase tracking-[0.32em] text-slate-500 mt-1">
                 Chimera Cortex Certification

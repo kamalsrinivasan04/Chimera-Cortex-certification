@@ -7,6 +7,7 @@ import ChatBubble from '../../components/Chat/ChatBubble';
 import Loader from '../../components/Common/Loader';
 import { Send, Clock, AlertTriangle, ShieldCheck, Play, ArrowRight, CornerDownLeft } from 'lucide-react';
 
+
 const AssessmentPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -17,18 +18,24 @@ const AssessmentPage = () => {
   const [messages, setMessages] = useState([]);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
   const [inputVal, setInputVal] = useState('');
-  
+
   // Profile collection state variables
   const [profileStep, setProfileStep] = useState('name');
   const [profile, setProfile] = useState({
     name: user?.name || '',
-    employeeId: '',
-    department: '',
-    jobRole: '',
-    experience: '',
-    skills: '',
+    employeeId: user?.employeeId || '',
+    department: user?.department || '',
+    jobRole: user?.jobRole || '',
+    experience: user?.experience !== undefined && user.experience !== null ? user.experience : '',
+    skills: Array.isArray(user?.skills) ? user.skills.join(', ') : (user?.skills || ''),
     certificationLevel: '',
   });
+
+  useEffect(() => {
+    if (user?.name) {
+      setInputVal(user.name);
+    }
+  }, [user]);
 
   // Active exam states
   const [assessmentId, setAssessmentId] = useState(null);
@@ -46,6 +53,9 @@ const AssessmentPage = () => {
   const [isTerminated, setIsTerminated] = useState(false);
   const [gradingProgress, setGradingProgress] = useState(false);
   const [isFullscreenActive, setIsFullscreenActive] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
+  const [terminationReason, setTerminationReason] = useState('security'); // 'security' or 'user-abort'
 
   const chatEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
@@ -89,7 +99,7 @@ const AssessmentPage = () => {
             setTimer(data.question.timerDuration);
             setIsTesting(true);
             setProfileStep('testing');
-            
+
             // Build greeting
             setMessages([
               { sender: 'ai', text: `Resuming assessment in progress. We are at question ${data.questionIndex} of ${data.totalQuestions}.` }
@@ -156,6 +166,7 @@ const AssessmentPage = () => {
 
   const handleTerminationTriggered = () => {
     setIsTerminated(true);
+    setTerminationReason('security');
     setIsTesting(false);
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(err => console.log(err));
@@ -167,7 +178,7 @@ const AssessmentPage = () => {
   // Submit on timeout
   const handleTimeOutSubmit = async () => {
     if (!assessmentId || !currentQuestion) return;
-    
+
     // Auto submit unanswered
     try {
       await api.post(`/api/assessments/${assessmentId}/answer`, {
@@ -224,6 +235,7 @@ const AssessmentPage = () => {
         setTimeout(() => {
           appendAiMessage(`Thanks, ${value}. What is your Employee ID? (This is optional, type 'skip' to ignore)`);
           setIsAgentTyping(false);
+          setInputVal(user?.employeeId || 'skip');
         }, 600);
         break;
 
@@ -234,6 +246,7 @@ const AssessmentPage = () => {
         setTimeout(() => {
           appendAiMessage('Which Department do you work in?');
           setIsAgentTyping(false);
+          setInputVal(user?.department || '');
         }, 600);
         break;
 
@@ -244,6 +257,7 @@ const AssessmentPage = () => {
         setTimeout(() => {
           appendAiMessage('What is your exact Job Role? (e.g. Senior Frontend Engineer, Full Stack Developer)');
           setIsAgentTyping(false);
+          setInputVal(user?.jobRole || '');
         }, 600);
         break;
 
@@ -252,8 +266,9 @@ const AssessmentPage = () => {
         setProfileStep('experience');
         setIsAgentTyping(true);
         setTimeout(() => {
-          appendAiMessage('How many Years of Experience do you possess in this role?');
+          appendAiMessage('How many years of Experience do you have?');
           setIsAgentTyping(false);
+          setInputVal(user?.experience !== undefined && user.experience !== null ? String(user.experience) : '');
         }, 600);
         break;
 
@@ -268,33 +283,37 @@ const AssessmentPage = () => {
         setTimeout(() => {
           appendAiMessage('List your core Skills (comma separated, e.g. React, Node.js, MongoDB, JavaScript):');
           setIsAgentTyping(false);
+          setInputVal(Array.isArray(user?.skills) ? user.skills.join(', ') : (user?.skills || ''));
         }, 600);
         break;
 
       case 'skills':
-        setProfile((prev) => ({ ...prev, skills: value }));
-        setProfileStep('level');
-        setIsAgentTyping(true);
-        setTimeout(() => {
-          appendAiMessage('Select your target Certification Level (Choose from the buttons below or type Beginner, Intermediate, or Advanced):');
-          setIsAgentTyping(false);
-        }, 600);
-        break;
+        const skillsVal = value;
 
-      case 'level':
-        const cleanVal = value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase();
-        if (!['Beginner', 'Intermediate', 'Advanced'].includes(cleanVal)) {
-          appendAiMessage("Please choose a valid level: 'Beginner', 'Intermediate', or 'Advanced'.");
-          return;
+        // Calculate level automatically based on experience
+        // - Beginner: experience < 2 years (or 0)
+        // - Intermediate: >= 2 and < 5 years
+        // - Advanced: >= 5 years
+        let calculatedLevel = 'Beginner';
+        const exp = profile.experience || 0;
+        if (exp >= 5) {
+          calculatedLevel = 'Advanced';
+        } else if (exp >= 2) {
+          calculatedLevel = 'Intermediate';
         }
-        
-        const finalProfile = { ...profile, certificationLevel: cleanVal };
+
+        const finalProfile = {
+          ...profile,
+          skills: skillsVal,
+          certificationLevel: calculatedLevel
+        };
         setProfile(finalProfile);
         setProfileStep('ready');
         setIsAgentTyping(true);
         setTimeout(() => {
-          appendAiMessage(`Perfect! I have compiled your credentials profile.\n\nLevel: ${cleanVal}\nRole: ${finalProfile.jobRole}\nSkills: ${finalProfile.skills}\n\nI will analyze your details and generate a personalized ${cleanVal} adaptive assessment containing 20 custom questions.\n\nReady to start?`);
+          appendAiMessage(`Perfect! I have compiled your credentials profile.\n\nLevel: ${calculatedLevel} (auto-suggested based on ${exp} years of experience)\nRole: ${finalProfile.jobRole}\nSkills: ${finalProfile.skills}\n\nI will analyze your details and generate a personalized ${calculatedLevel} adaptive assessment containing 20 custom questions.\n\nReady to start?`);
           setIsAgentTyping(false);
+          setInputVal('');
         }, 800);
         break;
 
@@ -316,13 +335,13 @@ const AssessmentPage = () => {
 
       setProfileStep('testing');
       setIsTesting(true);
-      
+
       // Fetch first question
       const qRes = await api.get(`/api/assessments/${data.assessmentId}/question`);
       setQuestionNum(qRes.data.questionIndex);
       setCurrentQuestion(qRes.data.question);
       setTimer(qRes.data.question.timerDuration);
-      
+
       setMessages((prev) => [
         ...prev,
         { sender: 'ai', text: `Welcome to the active exam interface. We have generated exactly 20 questions based on your profile.\n\nRules:\n1. Solve one question at a time.\n2. Timers tick individually.\n3. Exiting fullscreen/switching tabs is tracked.\n\nLet's begin with Question 1!` }
@@ -340,7 +359,7 @@ const AssessmentPage = () => {
     setSelectedAnswer(null);
     try {
       const { data } = await api.get(`/api/assessments/${assessmentId}/question`);
-      
+
       if (data.status === 'completed') {
         // Assessment finished, transition to grading loader
         setIsTesting(false);
@@ -382,10 +401,10 @@ const AssessmentPage = () => {
 
     try {
       // Append candidate response bubble
-      const answerDisplay = Array.isArray(selectedAnswer) 
-        ? selectedAnswer.join(', ') 
+      const answerDisplay = Array.isArray(selectedAnswer)
+        ? selectedAnswer.join(', ')
         : (selectedAnswer || 'Answer submitted');
-        
+
       setMessages((prev) => [
         ...prev,
         {
@@ -393,7 +412,7 @@ const AssessmentPage = () => {
           text: `Question ${questionNum}: ${currentQuestion.text}\n\nAnswer: ${answerDisplay}`
         }
       ]);
-      
+
       await api.post(`/api/assessments/${assessmentId}/answer`, {
         questionId: currentQuestion._id,
         answerText: selectedAnswer || '',
@@ -401,6 +420,56 @@ const AssessmentPage = () => {
       });
 
       loadNextQuestion();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  // Handle click on the Submit button
+  const handleSubmitExamClick = () => {
+    if (questionNum === totalQuestions) {
+      if (!selectedAnswer && selectedAnswer !== '' && currentQuestion.type !== 'Short' && currentQuestion.type !== 'Long' && currentQuestion.type !== 'Scenario' && currentQuestion.type !== 'Logical' && currentQuestion.type !== 'Analytical') {
+        alert('Please provide or select an answer before submitting.');
+        return;
+      }
+    }
+    setShowSubmitConfirmModal(true);
+  };
+
+  // Prematurely terminate assessment
+  const handleTerminateExamPrematurely = async () => {
+    try {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      await api.post(`/api/assessments/${assessmentId}/terminate`);
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
+      setIsTerminated(true);
+      setTerminationReason('user-abort');
+      setIsTesting(false);
+      setShowSubmitConfirmModal(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Final successful submit of assessment
+  const handleFinalSuccessfulSubmit = async () => {
+    try {
+      const timeTaken = currentQuestion.timerDuration - timer;
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+
+      await api.post(`/api/assessments/${assessmentId}/answer`, {
+        questionId: currentQuestion._id,
+        answerText: selectedAnswer || '',
+        timeTaken,
+      });
+
+      setShowSubmitConfirmModal(false);
+      setIsTesting(false);
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
+      runPostGradingAI();
     } catch (err) {
       console.error(err);
     }
@@ -412,11 +481,138 @@ const AssessmentPage = () => {
     setAssessmentId(null);
     setIsTesting(false);
     setProfileStep('name');
+    setShowRules(false);
     startFreshSetup();
   };
 
   if (loadingResume) return <Loader message="Retrieving ongoing assessment..." fullScreen />;
   if (gradingProgress) return <Loader message="Analyzing results. Calculating subject topic competence and writing final feedback summary report..." fullScreen />;
+
+  if (showRules) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8 min-h-[82vh] flex items-center justify-center text-slate-950">
+        <div className="bg-white border border-slate-200 p-8 rounded-2xl flex flex-col space-y-6 overflow-y-auto max-h-[80vh] shadow-lg w-full">
+          {/* Header */}
+          <div className="text-center">
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center space-x-2">
+              <ShieldCheck className="w-7 h-7 text-[#ff6a1f]" />
+              <span>Assessment Rules & Instructions</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">Please read all instructions carefully before starting the exam.</p>
+          </div>
+
+          {/* Rules body */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+            <div className="space-y-4">
+              {/* Security */}
+              <div className="border border-slate-100 p-4 rounded-xl bg-slate-50 space-y-2">
+                <h3 className="font-bold text-[#ff6a1f] flex items-center space-x-1.5 text-xs uppercase tracking-wider">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-[#ff6a1f]" />
+                  <span>Security & Integrity</span>
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Tab switching, copying, pasting, right-clicking, and exiting fullscreen are strictly prohibited. Doing any of these logs a security violation.
+                </p>
+                <div className="text-[10px] text-red-600 font-bold bg-red-50 border border-red-100 rounded px-2.5 py-1 inline-block">
+                  MAXIMUM 3 WARNINGS ALLOWED
+                </div>
+              </div>
+
+              {/* Attempts */}
+              <div className="border border-slate-100 p-4 rounded-xl bg-slate-50 space-y-2">
+                <h3 className="font-bold text-[#ff6a1f] flex items-center space-x-1.5 text-xs uppercase tracking-wider">
+                  <Play className="w-4 h-4 shrink-0 text-[#ff6a1f]" />
+                  <span>Attempt Details</span>
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Only 1 attempt is allowed. Once you begin, you cannot pause or resume later. You must stay online until completion.
+                </p>
+              </div>
+
+              {/* Fullscreen */}
+              <div className="border border-slate-100 p-4 rounded-xl bg-slate-50 space-y-2">
+                <h3 className="font-bold text-[#ff6a1f] flex items-center space-x-1.5 text-xs uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-[#ff6a1f]" />
+                  <span>Fullscreen Requirement</span>
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  The test runs strictly in fullscreen mode. Leaving fullscreen triggers an immediate integrity warning.
+                </p>
+              </div>
+            </div>
+
+            {/* Timings */}
+            <div className="border border-slate-100 p-4 rounded-xl bg-slate-50 space-y-3">
+              <h3 className="font-bold text-[#ff6a1f] flex items-center space-x-1.5 text-xs uppercase tracking-wider">
+                <Clock className="w-4 h-4 shrink-0 text-[#ff6a1f]" />
+                <span>Timing Allotments</span>
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Timers tick individually for each question. Unanswered questions submit automatically when time expires.
+              </p>
+
+              {/* Timing Table */}
+              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <table className="min-w-full text-xs text-left">
+                  <thead className="bg-slate-50 font-bold border-b border-slate-200 text-slate-700">
+                    <tr>
+                      <th className="px-3 py-2">Question Type</th>
+                      <th className="px-3 py-2 text-right">Time Allotment</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-600">
+                    <tr>
+                      <td className="px-3 py-2 font-medium text-slate-800">Multiple Choice (MCQ)</td>
+                      <td className="px-3 py-2 text-right">30s</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 font-medium text-slate-800">Multiple Selection (MSQ)</td>
+                      <td className="px-3 py-2 text-right">45s</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 font-medium text-slate-800">Short Answer</td>
+                      <td className="px-3 py-2 text-right">90s (1.5m)</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 font-medium text-slate-800">Logical / Analytical</td>
+                      <td className="px-3 py-2 text-right">120s (2m)</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 font-medium text-slate-800">Scenario-based</td>
+                      <td className="px-3 py-2 text-right">240s (4m)</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 font-medium text-slate-800">Long Answer</td>
+                      <td className="px-3 py-2 text-right">300s (5m)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-100">
+            <button
+              onClick={() => setShowRules(false)}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors"
+            >
+              Back to Chat
+            </button>
+            <button
+              onClick={() => {
+                setShowRules(false);
+                handleStartExam();
+              }}
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-bold text-sm transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)]"
+            >
+              Acknowledge & Start Exam
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isExamMode = isTesting || isTerminated;
   const showActiveExamLayout = isTesting && currentQuestion;
@@ -427,14 +623,18 @@ const AssessmentPage = () => {
         ? 'fixed inset-0 z-[70] flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-br from-[#fffdf9] via-white to-[#fff4eb] px-4 py-4 text-slate-950 sm:px-6 lg:px-8'
         : 'max-w-4xl mx-auto px-4 py-8 h-[82vh] flex flex-col justify-between text-slate-950'}
     >
-      
+
       {/* 1. DISQUALIFIED SCREEN */}
       {isTerminated ? (
-          <div className="bg-white border border-red-200 p-8 rounded-2xl flex flex-col items-center justify-center space-y-6 my-auto text-center shadow-sm">
+        <div className="bg-white border border-red-200 p-8 rounded-2xl flex flex-col items-center justify-center space-y-6 my-auto text-center shadow-sm">
           <AlertTriangle className="w-16 h-16 text-red-500 animate-bounce" />
-          <h2 className="text-2xl font-extrabold text-slate-950">Assessment Disqualified</h2>
+          <h2 className="text-2xl font-extrabold text-slate-950">
+            {terminationReason === 'user-abort' ? 'Assessment Terminated' : 'Assessment Disqualified'}
+          </h2>
           <p className="text-sm text-slate-600 max-w-md">
-            The security integrity system logged 3 or more tab switching/exit-fullscreen events. This attempt has been permanently discarded.
+            {terminationReason === 'user-abort'
+              ? 'You chose to submit the assessment before finishing all questions. This attempt has been terminated and permanently discarded.'
+              : 'The security integrity system logged 3 or more tab switching/exit-fullscreen events. This attempt has been permanently discarded.'}
           </p>
           <button
             onClick={handleRestartExam}
@@ -552,7 +752,7 @@ const AssessmentPage = () => {
                   {profileStep === 'ready' && !isTesting && (
                     <div className="mt-4 flex justify-center">
                       <button
-                        onClick={handleStartExam}
+                        onClick={() => setShowRules(true)}
                         className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl transition-all shadow-[0_12px_28px_rgba(255,106,31,0.24)]"
                       >
                         <Play className="w-4 h-4" />
@@ -658,14 +858,35 @@ const AssessmentPage = () => {
                   </div>
 
                   {isTesting && currentQuestion && (
-                    <div className="mt-4 flex justify-end border-t border-slate-200 pt-4">
-                      <button
-                        onClick={handleSubmitActiveAnswer}
-                        className="flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl text-xs transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)] active:scale-95"
-                      >
-                        <span>Submit & Next Question</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="mt-4 flex justify-between items-center border-t border-slate-200 pt-4">
+                      {questionNum < totalQuestions ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleSubmitExamClick}
+                            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
+                          >
+                            Submit Exam
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSubmitActiveAnswer}
+                            className="flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl text-xs transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)] active:scale-95"
+                          >
+                            <span>Next Question</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSubmitExamClick}
+                          className="w-full flex items-center justify-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-bold rounded-xl text-xs transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)] active:scale-95"
+                        >
+                          <Play className="w-3 h-3 shrink-0" />
+                          <span>Submit Assessment</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -704,7 +925,7 @@ const AssessmentPage = () => {
                     {profileStep === 'ready' && (
                       <div className="flex justify-center mb-4">
                         <button
-                          onClick={handleStartExam}
+                          onClick={() => setShowRules(true)}
                           className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl transition-all shadow-[0_12px_28px_rgba(255,106,31,0.24)]"
                         >
                           <Play className="w-4 h-4" />
@@ -796,8 +1017,8 @@ const AssessmentPage = () => {
                               key={idx}
                               className={`flex items-center space-x-3 p-3 rounded-xl border text-sm cursor-pointer transition-all
                                 ${isSelected
-                                    ? 'bg-[#fff4eb] border-[#ff6a1f] text-slate-950 shadow-sm'
-                                    : 'bg-white border-slate-200 hover:border-[#ff8b4d] text-slate-700'}`}
+                                  ? 'bg-[#fff4eb] border-[#ff6a1f] text-slate-950 shadow-sm'
+                                  : 'bg-white border-slate-200 hover:border-[#ff8b4d] text-slate-700'}`}
                             >
                               <input
                                 type="checkbox"
@@ -842,19 +1063,77 @@ const AssessmentPage = () => {
                     )}
 
                     {/* Submission button */}
-                    <div className="flex justify-end pt-2 border-t border-slate-200">
-                      <button
-                        onClick={handleSubmitActiveAnswer}
-                        className="flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl text-xs transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)] active:scale-95"
-                      >
-                        <span>Submit & Next Question</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                      {questionNum < totalQuestions ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleSubmitExamClick}
+                            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
+                          >
+                            Submit Exam
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSubmitActiveAnswer}
+                            className="flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl text-xs transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)] active:scale-95"
+                          >
+                            <span>Next Question</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSubmitExamClick}
+                          className="w-full flex items-center justify-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-bold rounded-xl text-xs transition-all shadow-[0_10px_24px_rgba(255,106,31,0.22)] active:scale-95"
+                        >
+                          <Play className="w-3 h-3 shrink-0" />
+                          <span>Submit Assessment</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
             </>
+          )}
+
+          {/* 5. SUBMIT CONFIRMATION MODAL */}
+          {showSubmitConfirmModal && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white border border-slate-200 p-6 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
+                <div className="flex items-center space-x-3 text-red-500">
+                  <AlertTriangle className="w-8 h-8 shrink-0" />
+                  <h3 className="text-lg font-bold text-slate-950">
+                    {questionNum < totalQuestions ? 'Terminate & Submit Assessment?' : 'Submit Assessment?'}
+                  </h3>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {questionNum < totalQuestions
+                    ? `Warning: You have only answered ${questionNum} out of ${totalQuestions} questions. Submitting now will prematurely terminate your exam, and this attempt will be permanently marked as incomplete/terminated.`
+                    : `You have completed all ${totalQuestions} questions. Are you sure you want to submit your answers for final AI grading?`}
+                </p>
+
+                <div className="flex justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowSubmitConfirmModal(false)}
+                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={questionNum < totalQuestions ? handleTerminateExamPrematurely : handleFinalSuccessfulSubmit}
+                    className="px-5 py-2 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-semibold rounded-xl text-xs transition-all shadow-[0_8px_18px_rgba(255,106,31,0.22)]"
+                  >
+                    {questionNum < totalQuestions ? 'Yes, Terminate & Submit' : 'Yes, Submit Exam'}
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* 4. SECURITY WARNING MODAL */}

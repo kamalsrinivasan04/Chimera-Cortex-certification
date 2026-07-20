@@ -409,3 +409,30 @@ export const getUserAssessments = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Terminate assessment prematurely
+// @route   POST /api/assessments/:id/terminate
+// @access  Private
+export const terminateAssessment = async (req, res, next) => {
+  try {
+    const assessment = await Assessment.findById(req.params.id);
+    if (!assessment) {
+      res.status(404);
+      throw new Error('Assessment not found');
+    }
+    if (assessment.userId.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Unauthorized');
+    }
+
+    assessment.status = 'terminated';
+    await assessment.save();
+
+    res.json({
+      message: 'Assessment was terminated successfully',
+      status: 'terminated'
+    });
+  } catch (error) {
+    next(error);
+  }
+};

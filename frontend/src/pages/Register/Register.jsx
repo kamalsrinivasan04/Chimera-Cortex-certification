@@ -8,6 +8,12 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [age, setAge] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState('');
+  const [jobRole, setJobRole] = useState('');
+  const [experience, setExperience] = useState('');
+  const [skills, setSkills] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -18,7 +24,7 @@ const Register = () => {
     setError('');
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(name, email, password, age ? Number(age) : 0, employeeId, department, jobRole, experience ? Number(experience) : 0, skills);
       navigate('/dashboard');
     } catch (err) {
       setError(err);
@@ -92,6 +98,99 @@ const Register = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="•••••••• (Min 6 chars)"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Age</label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <input
+                type="number"
+                required
+                min="1"
+                max="120"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="28"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Employee ID (Optional)</label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                placeholder="EMP123"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Department Name</label>
+            <div className="relative">
+              <Award className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                required
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                placeholder="Engineering"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Job Role</label>
+            <div className="relative">
+              <Award className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                required
+                value={jobRole}
+                onChange={(e) => setJobRole(e.target.value)}
+                placeholder="Software Engineer"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Experience (Years)</label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <input
+                type="number"
+                required
+                min="0"
+                max="80"
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+                placeholder="3"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Skills (Comma Separated)</label>
+            <div className="relative">
+              <Award className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                required
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                placeholder="React, Node.js, MongoDB, JavaScript"
                 className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-colors"
               />
             </div>

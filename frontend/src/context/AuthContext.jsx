@@ -32,7 +32,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await api.post('/api/auth/login', { email, password });
       localStorage.setItem('token', data.token);
-      setUser({ _id: data._id, name: data.name, email: data.email, role: data.role });
+      const { token, ...userData } = data;
+      setUser(userData);
       return data;
     } catch (err) {
       throw err.response?.data?.message || 'Login failed';
@@ -41,12 +42,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, age, employeeId, department, jobRole, experience, skills) => {
     setLoading(true);
     try {
-      const { data } = await api.post('/api/auth/register', { name, email, password });
+      const { data } = await api.post('/api/auth/register', { name, email, password, age, employeeId, department, jobRole, experience, skills });
       localStorage.setItem('token', data.token);
-      setUser({ _id: data._id, name: data.name, email: data.email, role: data.role });
+      const { token, ...userData } = data;
+      setUser(userData);
       return data;
     } catch (err) {
       throw err.response?.data?.message || 'Registration failed';

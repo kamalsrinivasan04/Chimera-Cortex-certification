@@ -140,6 +140,14 @@ const ResultsPage = () => {
         </div>
       </div>
 
+      {/* 1.5. CERTIFICATE PREVIEW (ON TOP IF PASSED) */}
+      {isPassed && certificate && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-slate-950 tracking-wide border-b border-slate-200 pb-2">Official Certification Certificate</h2>
+          <CertificatePreview certificate={certificate} onDownload={handleDownloadPDF} />
+        </div>
+      )}
+
       {/* 2. RECHARTS METRICS */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-slate-950 tracking-wide border-b border-slate-200 pb-2">Quantitative Metrics</h2>
@@ -229,13 +237,10 @@ const ResultsPage = () => {
 
       </div>
 
-      {/* 4. REMEDIATION SUGGESTIONS OR CERTIFICATE DOWNLOAD */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-950 tracking-wide border-b border-slate-200 pb-2">Next Steps & Deliverables</h2>
-        
-        {isPassed && certificate ? (
-          <CertificatePreview certificate={certificate} onDownload={handleDownloadPDF} />
-        ) : (
+      {/* 4. SUGGESTED STUDY PATHWAY (IF FAILED) */}
+      {!isPassed && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-slate-950 tracking-wide border-b border-slate-200 pb-2">Next Steps & Study Schedule</h2>
           <div className="bg-white border border-slate-200 p-6 sm:p-8 rounded-3xl space-y-6 shadow-sm">
             <div className="flex items-center space-x-3 text-primary-600">
               <Compass className="w-6 h-6 shrink-0" />
@@ -268,14 +273,14 @@ const ResultsPage = () => {
               </div>
               <button
                 onClick={() => navigate('/assessment')}
-                className="px-5 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-xl text-xs transition-colors active:scale-95"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] hover:from-[#ff4a03] hover:to-[#d63d04] text-white font-bold rounded-xl text-xs transition-colors active:scale-95"
               >
                 Start New Assessment Attempt
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
     </div>
   );

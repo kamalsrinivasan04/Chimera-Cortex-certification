@@ -2,7 +2,7 @@
  * Validates request payload for registration and login.
  */
 export const validateRegister = (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, age, employeeId, department, jobRole, experience } = req.body;
 
   if (!name || !name.trim()) {
     return res.status(400).json({ message: 'Name is required' });
@@ -19,6 +19,22 @@ export const validateRegister = (req, res, next) => {
 
   if (!password || password.length < 6) {
     return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+  }
+
+  if (age === undefined || age === null || isNaN(age) || Number(age) <= 0) {
+    return res.status(400).json({ message: 'A valid age is required' });
+  }
+
+  if (!department || !department.trim()) {
+    return res.status(400).json({ message: 'Department name is required' });
+  }
+
+  if (!jobRole || !jobRole.trim()) {
+    return res.status(400).json({ message: 'Job role is required' });
+  }
+
+  if (experience === undefined || experience === null || isNaN(experience) || Number(experience) < 0) {
+    return res.status(400).json({ message: 'Experience must be a positive number of years' });
   }
 
   next();

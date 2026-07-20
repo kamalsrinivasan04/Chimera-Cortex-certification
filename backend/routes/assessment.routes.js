@@ -5,7 +5,8 @@ import {
   submitAnswer, 
   logCheating, 
   evaluateAssessment, 
-  getUserAssessments 
+  getUserAssessments,
+  terminateAssessment
 } from '../controllers/assessment.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { 
@@ -24,5 +25,6 @@ router.get('/:id/question', getCurrentQuestion);
 router.post('/:id/answer', validateSubmitAnswer, submitAnswer);
 router.post('/:id/cheat', validateCheatLog, logCheating);
 router.post('/:id/evaluate', evaluateAssessment);
+router.post('/:id/terminate', terminateAssessment);
 
 export default router;

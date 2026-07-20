@@ -13,9 +13,9 @@ const generateToken = (id) => {
 // @access  Public
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, age, employeeId, department, jobRole, experience, skills } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || age === undefined || !department || !jobRole || experience === undefined) {
       res.status(400);
       throw new Error('Please include all fields');
     }
@@ -27,11 +27,22 @@ export const registerUser = async (req, res, next) => {
       throw new Error('User already exists');
     }
 
+    // Parse skills from comma-separated string to array
+    const skillsArray = skills
+      ? skills.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
     // Create user
     const user = await User.create({
       name,
       email,
       password,
+      age: Number(age),
+      employeeId: employeeId || '',
+      department,
+      jobRole,
+      experience: Number(experience),
+      skills: skillsArray,
     });
 
     if (user) {
@@ -40,6 +51,12 @@ export const registerUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        age: user.age,
+        employeeId: user.employeeId,
+        department: user.department,
+        jobRole: user.jobRole,
+        experience: user.experience,
+        skills: user.skills,
         token: generateToken(user._id),
       });
     } else {
@@ -71,6 +88,12 @@ export const loginUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        age: user.age,
+        employeeId: user.employeeId,
+        department: user.department,
+        jobRole: user.jobRole,
+        experience: user.experience,
+        skills: user.skills,
         token: generateToken(user._id),
       });
     } else {
@@ -94,6 +117,12 @@ export const getUserProfile = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        age: user.age,
+        employeeId: user.employeeId,
+        department: user.department,
+        jobRole: user.jobRole,
+        experience: user.experience,
+        skills: user.skills,
       });
     } else {
       res.status(404);
