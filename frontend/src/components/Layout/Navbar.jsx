@@ -69,15 +69,9 @@ const Navbar = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/login"
-                className="text-sm font-medium text-slate-600 hover:text-[#ff6a1f] transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/register"
                 className="text-sm font-semibold px-4 py-2 rounded-full border border-[#ff8b4d] bg-gradient-to-r from-[#ff6a1f] to-[#ff4a03] text-white shadow-[0_10px_24px_rgba(255,106,31,0.22)] transition-all hover:from-[#ff4a03] hover:to-[#d63d04] hover:shadow-[0_12px_28px_rgba(255,106,31,0.28)]"
               >
-                Get Started
+                Sign In
               </Link>
             </div>
           )}

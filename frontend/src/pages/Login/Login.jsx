@@ -89,14 +89,6 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        {/* Footer link */}
-        <p className="mt-6 text-center text-xs text-slate-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-[#ff6a1f] hover:underline hover:text-[#ff4a03] font-medium">
-            Create account
-          </Link>
-        </p>
       </div>
     </div>
   );
