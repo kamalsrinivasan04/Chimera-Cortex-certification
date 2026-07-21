@@ -20,22 +20,20 @@ const AssessmentPage = () => {
   const [inputVal, setInputVal] = useState('');
 
   // Profile collection state variables
-  const [profileStep, setProfileStep] = useState('name');
+  const [profileStep, setProfileStep] = useState('useCases');
   const [profile, setProfile] = useState({
     name: user?.name || '',
     employeeId: user?.employeeId || '',
-    department: user?.department || '',
-    jobRole: user?.jobRole || '',
-    experience: user?.experience !== undefined && user.experience !== null ? user.experience : '',
+    department: user?.department || 'Engineering',
+    useCases: '',
+    projectsCount: '',
+    experience: '',
+    responsibility: '',
     skills: Array.isArray(user?.skills) ? user.skills.join(', ') : (user?.skills || ''),
     certificationLevel: '',
   });
 
-  useEffect(() => {
-    if (user?.name) {
-      setInputVal(user.name);
-    }
-  }, [user]);
+
 
   // Active exam states
   const [assessmentId, setAssessmentId] = useState(null);
@@ -127,7 +125,7 @@ const AssessmentPage = () => {
       setMessages([
         {
           sender: 'ai',
-          text: `Hello! I am your AI Assessment Agent. I will generate a personalized certification assessment for you. Let's configure your profile.\n\nFirst, please verify your Full Name:`,
+          text: `Hello! I am your AI Assessment Agent. I will configure your persona to generate a custom certification assessment for you.\n\nFirst, what are your primary Use Cases or target domains? (e.g. LLM integration, Fullstack development, Web automation):`,
         },
       ]);
       setIsAgentTyping(false);
@@ -218,6 +216,30 @@ const AssessmentPage = () => {
     setMessages((prev) => [...prev, { sender: 'ai', text }]);
   };
 
+  const PERSONA_BRIEFS = {
+    Beginner: [
+      "Core Technical Basics: Understanding of fundamental programming paradigms, variables, loops, control structures, and simple data schemas.",
+      "Standard Tool Familiarity: Competency in using basic developer tools such as git version control, IDEs, and executing scripts.",
+      "Application Development: Capability to build simple local applications, small helper scripts, or basic UI frontend components under supervision.",
+      "Problem Solving: Aptitude for troubleshooting basic syntax errors, reading debugging logs, and implementing standard algorithm rules.",
+      "Team Collaboration: Awareness of basic agile practices, tasks boards, and standard peer code review conventions."
+    ],
+    Intermediate: [
+      "System Design & API Integration: Competence in designing RESTful web APIs, relational/non-relational database schemas, and modular components.",
+      "Independent Feature Implementation: Ability to take ownership of end-to-end feature modules, resolve edge cases, and integrate third-party services.",
+      "Testing & Quality Assurance: Proficiency in writing robust unit, integration, and regression tests to guarantee code coverage and product reliability.",
+      "Performance Tuning & Optimization: Skill in profiling database query bottlenecks, implementing basic caching layers, and optimizing resource assets.",
+      "CI/CD & Production Deployment: Experience building containerized environments (Docker), configuring automation workflows, and monitoring application logs."
+    ],
+    Advanced: [
+      "Enterprise Architecture Design: Expertise in microservices patterns, distributed caching, event-driven integrations, and high-availability systems.",
+      "Technical Leadership & Mentorship: Experience leading developer teams, setting coding standards, conducting system design reviews, and guiding peers.",
+      "Infrastructure & Cloud Native Scale: Designing Kubernetes cluster topologies, managing infrastructure-as-code scripts, and scaling distributed networks.",
+      "Security, Compliance & Vulnerabilities: Implementing advanced cryptography, secure access controls (OAuth, SAML), and regulatory compliance audits.",
+      "Operational Reliability & Recovery: Optimizing extreme data workloads, configuring automated failovers, circuit breakers, and disaster recovery strategies."
+    ]
+  };
+
   // Profile input step handler
   const handleProfileInputSubmit = (value) => {
     if (!value.trim()) return;
@@ -228,90 +250,111 @@ const AssessmentPage = () => {
 
     // Advance states
     switch (profileStep) {
-      case 'name':
-        setProfile((prev) => ({ ...prev, name: value }));
-        setProfileStep('empId');
+      case 'useCases':
+        setProfile((prev) => ({ ...prev, useCases: value }));
+        setProfileStep('projectsCount');
         setIsAgentTyping(true);
         setTimeout(() => {
-          appendAiMessage(`Thanks, ${value}. What is your Employee ID? (This is optional, type 'skip' to ignore)`);
+          appendAiMessage('How many projects have you built or deployed?');
           setIsAgentTyping(false);
-          setInputVal(user?.employeeId || 'skip');
+          setInputVal('');
         }, 600);
         break;
 
-      case 'empId':
-        setProfile((prev) => ({ ...prev, employeeId: value.toLowerCase() === 'skip' ? '' : value }));
-        setProfileStep('dept');
-        setIsAgentTyping(true);
-        setTimeout(() => {
-          appendAiMessage('Which Department do you work in?');
-          setIsAgentTyping(false);
-          setInputVal(user?.department || '');
-        }, 600);
-        break;
-
-      case 'dept':
-        setProfile((prev) => ({ ...prev, department: value }));
-        setProfileStep('role');
-        setIsAgentTyping(true);
-        setTimeout(() => {
-          appendAiMessage('What is your exact Job Role? (e.g. Senior Frontend Engineer, Full Stack Developer)');
-          setIsAgentTyping(false);
-          setInputVal(user?.jobRole || '');
-        }, 600);
-        break;
-
-      case 'role':
-        setProfile((prev) => ({ ...prev, jobRole: value }));
+      case 'projectsCount':
+        if (isNaN(value) || Number(value) < 0) {
+          appendAiMessage('Please enter a valid numeric value for the number of projects.');
+          return;
+        }
+        setProfile((prev) => ({ ...prev, projectsCount: Number(value) }));
         setProfileStep('experience');
         setIsAgentTyping(true);
         setTimeout(() => {
-          appendAiMessage('How many years of Experience do you have?');
+          appendAiMessage('How many years of professional experience do you have?');
           setIsAgentTyping(false);
-          setInputVal(user?.experience !== undefined && user.experience !== null ? String(user.experience) : '');
+          setInputVal('');
         }, 600);
         break;
 
       case 'experience':
-        if (isNaN(value)) {
+        if (isNaN(value) || Number(value) < 0) {
           appendAiMessage('Please enter a valid numeric value for your years of experience.');
           return;
         }
         setProfile((prev) => ({ ...prev, experience: Number(value) }));
-        setProfileStep('skills');
+        setProfileStep('responsibility');
         setIsAgentTyping(true);
         setTimeout(() => {
-          appendAiMessage('List your core Skills (comma separated, e.g. React, Node.js, MongoDB, JavaScript):');
+          appendAiMessage('Describe your core Roles and Responsibilities in your projects/team:');
           setIsAgentTyping(false);
-          setInputVal(Array.isArray(user?.skills) ? user.skills.join(', ') : (user?.skills || ''));
+          setInputVal('');
         }, 600);
         break;
 
-      case 'skills':
-        const skillsVal = value;
+      case 'responsibility':
+        setProfile((prev) => ({ ...prev, responsibility: value }));
+        setProfileStep('skillsTools');
+        setIsAgentTyping(true);
+        setTimeout(() => {
+          appendAiMessage('What core Skills and Tools are you familiar with? (comma separated, e.g. React, Node.js, Docker, Git):');
+          setIsAgentTyping(false);
+          setInputVal('');
+        }, 600);
+        break;
 
-        // Calculate level automatically based on experience
-        // - Beginner: experience < 2 years (or 0)
-        // - Intermediate: >= 2 and < 5 years
-        // - Advanced: >= 5 years
+      case 'skillsTools':
+        const skillsVal = value;
+        const projCount = Number(profile.projectsCount) || 0;
+        const yearsExp = Number(profile.experience) || 0;
+        const respLower = profile.responsibility.toLowerCase();
+        const skillsLower = skillsVal.toLowerCase();
+
+        // Calculate level automatically based on experience, projects count, roles, and skills
         let calculatedLevel = 'Beginner';
-        const exp = profile.experience || 0;
-        if (exp >= 5) {
+        if (yearsExp === 0 && projCount === 0) {
+          calculatedLevel = 'Beginner';
+        } else if (yearsExp >= 5 || projCount >= 5 || (yearsExp >= 3 && (respLower.includes('lead') || respLower.includes('architect') || respLower.includes('senior') || respLower.includes('design') || respLower.includes('manage')))) {
           calculatedLevel = 'Advanced';
-        } else if (exp >= 2) {
+        } else if (yearsExp >= 2 || projCount >= 2 || respLower.includes('developer') || respLower.includes('engineer') || skillsLower.split(',').length >= 3) {
           calculatedLevel = 'Intermediate';
         }
 
         const finalProfile = {
-          ...profile,
+          name: profile.name,
+          employeeId: user?.employeeId || 'EMP-TEMP',
+          department: user?.department || 'Engineering',
+          jobRole: profile.responsibility || 'Developer',
+          experience: yearsExp, // map years of experience to schema experience parameter
           skills: skillsVal,
           certificationLevel: calculatedLevel
         };
+
         setProfile(finalProfile);
         setProfileStep('ready');
         setIsAgentTyping(true);
+
+        const briefPoints = PERSONA_BRIEFS[calculatedLevel].map((pt, idx) => `${idx + 1}. ${pt}`).join('\n');
+
         setTimeout(() => {
-          appendAiMessage(`Perfect! I have compiled your credentials profile.\n\nLevel: ${calculatedLevel} (auto-suggested based on ${exp} years of experience)\nRole: ${finalProfile.jobRole}\nSkills: ${finalProfile.skills}\n\nI will analyze your details and generate a personalized ${calculatedLevel} adaptive assessment containing 20 custom questions.\n\nReady to start?`);
+          appendAiMessage(`Perfect! I have analyzed your persona details and suggested the target certification path.
+
+**Suggested Certification Level:** ${calculatedLevel} (decided based on your profile inputs)
+* Use Cases: ${profile.useCases || 'General'}
+* Projects Deployed: ${projCount}
+* Experience: ${yearsExp} Years
+* Responsibilities: ${finalProfile.jobRole}
+* Skills: ${finalProfile.skills}
+
+---
+
+### Recommended Level Persona Brief
+To succeed at the **${calculatedLevel}** tier, you should have the following roles, responsibilities, and skillsets:
+
+${briefPoints}
+
+---
+
+Ready to proceed to the exam rules review?`);
           setIsAgentTyping(false);
           setInputVal('');
         }, 800);
@@ -480,7 +523,7 @@ const AssessmentPage = () => {
     setIsTerminated(false);
     setAssessmentId(null);
     setIsTesting(false);
-    setProfileStep('name');
+    setProfileStep('useCases');
     setShowRules(false);
     startFreshSetup();
   };
