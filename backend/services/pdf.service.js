@@ -16,10 +16,11 @@ const emblemPath = path.join(__dirname, '../assets/emblem.png');
 export const generateCertificatePDF = async (certificate, writeStream) => {
   return new Promise(async (resolve, reject) => {
     try {
-      // Create a landscape A4 document (for the Certificate page)
+      // Create a landscape A4 document (for the Certificate page) with bufferPages enabled
       const doc = new PDFDocument({
         size: 'A4',
         layout: 'landscape',
+        bufferPages: true,
         margins: { top: 40, bottom: 40, left: 40, right: 40 },
       });
 
@@ -202,6 +203,10 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
       }
 
       if (report) {
+        // Set document default options for report pages so auto-breaks inherit A4 Portrait
+        doc.options.layout = 'portrait';
+        doc.options.margins = { top: 50, bottom: 50, left: 50, right: 50 };
+
         // Add A4 Portrait Page for Report
         doc.addPage({
           size: 'A4',
@@ -269,6 +274,10 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
         doc.y += 15;
         if (report.topicWiseScore && report.topicWiseScore.length > 0) {
           report.topicWiseScore.forEach((item) => {
+            if (doc.y > pHeight - 80) {
+              doc.addPage({ size: 'A4', layout: 'portrait', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+              doc.y = 50;
+            }
             const currentY = doc.y;
             // Draw topic name
             doc.fillColor('#0f172a')
@@ -298,6 +307,11 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
 
         // AI Feedback Summary (In a premium left-border card)
         doc.y += 10;
+        if (doc.y > pHeight - 120) {
+          doc.addPage({ size: 'A4', layout: 'portrait', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+          doc.y = 50;
+        }
+
         doc.fillColor('#334155')
            .font('Helvetica-Bold')
            .fontSize(10)
@@ -305,22 +319,47 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
 
         doc.y += 12;
         const feedbackY = doc.y;
-        const feedbackText = report.performanceSummary;
-        const textH = doc.heightOfString(feedbackText, { width: pWidth - 120, lineGap: 3 });
+        const feedbackText = report.performanceSummary || '';
+        const textH = doc.heightOfString(feedbackText, { width: pWidth - 130, lineGap: 3 });
 
-        // Highlight card box
-        doc.rect(50, feedbackY, pWidth - 100, textH + 16).fill('#f8fafc');
-        doc.rect(50, feedbackY, 4, textH + 16).fill('#ff6a1f'); // left orange border accent
-        
-        doc.fillColor('#334155')
-           .font('Helvetica')
-           .fontSize(8.5)
-           .text(feedbackText, 65, feedbackY + 8, { align: 'justify', width: pWidth - 130, lineGap: 3 });
-
-        doc.y = feedbackY + textH + 30;
+        if (feedbackY + textH + 20 > pHeight - 60) {
+          doc.addPage({ size: 'A4', layout: 'portrait', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+          doc.y = 50;
+          const fY = doc.y;
+          doc.rect(50, fY, pWidth - 100, textH + 16).fill('#f8fafc');
+          doc.rect(50, fY, 4, textH + 16).fill('#ff6a1f');
+          doc.fillColor('#334155')
+             .font('Helvetica')
+             .fontSize(8.5)
+             .text(feedbackText, 65, fY + 8, { align: 'justify', width: pWidth - 130, lineGap: 3 });
+          doc.y = fY + textH + 30;
+        } else {
+          doc.rect(50, feedbackY, pWidth - 100, textH + 16).fill('#f8fafc');
+          doc.rect(50, feedbackY, 4, textH + 16).fill('#ff6a1f');
+          doc.fillColor('#334155')
+             .font('Helvetica')
+             .fontSize(8.5)
+             .text(feedbackText, 65, feedbackY + 8, { align: 'justify', width: pWidth - 130, lineGap: 3 });
+          doc.y = feedbackY + textH + 30;
+        }
 
         // Strengths & Weaknesses
-        if (doc.y > pHeight - 160) {
+        const cardW = (pWidth - 120) / 2; // ~217
+        let strH = 25;
+        if (report.strengths && report.strengths.length > 0) {
+          report.strengths.forEach((str) => {
+            strH += doc.heightOfString(`• ${str}`, { width: cardW - 24 }) + 4;
+          });
+        }
+        let weakH = 25;
+        if (report.weaknesses && report.weaknesses.length > 0) {
+          report.weaknesses.forEach((weak) => {
+            weakH += doc.heightOfString(`• ${weak}`, { width: cardW - 24 }) + 4;
+          });
+        }
+        const calculatedBoxH = Math.max(120, Math.max(strH, weakH) + 15);
+
+        if (doc.y + calculatedBoxH + 35 > pHeight - 50) {
           doc.addPage({ size: 'A4', layout: 'portrait', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
           doc.y = 50;
         }
@@ -333,15 +372,13 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
 
         doc.y += 15;
         const cardY = doc.y;
-        const cardW = (pWidth - 120) / 2; // ~217
-        const maxBoxH = 130; // default safe initial height
 
-        // Draw backgrounds first
-        doc.rect(50, cardY, cardW, maxBoxH).fill('#f0fdf4');
-        doc.rect(50, cardY, cardW, maxBoxH).lineWidth(1).stroke('#bbf7d0');
+        // Draw backgrounds
+        doc.rect(50, cardY, cardW, calculatedBoxH).fill('#f0fdf4');
+        doc.rect(50, cardY, cardW, calculatedBoxH).lineWidth(1).stroke('#bbf7d0');
 
-        doc.rect(pWidth / 2 + 10, cardY, cardW, maxBoxH).fill('#fef2f2');
-        doc.rect(pWidth / 2 + 10, cardY, cardW, maxBoxH).lineWidth(1).stroke('#fecaca');
+        doc.rect(pWidth / 2 + 10, cardY, cardW, calculatedBoxH).fill('#fef2f2');
+        doc.rect(pWidth / 2 + 10, cardY, cardW, calculatedBoxH).lineWidth(1).stroke('#fecaca');
 
         // Draw texts
         let strContentY = cardY + 10;
@@ -366,10 +403,17 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
           });
         }
 
-        doc.y = cardY + maxBoxH + 20;
+        doc.y = cardY + calculatedBoxH + 25;
 
         // Recommendations
-        if (doc.y > pHeight - 120) {
+        let recTotalH = 30;
+        if (report.recommendations && report.recommendations.length > 0) {
+          report.recommendations.forEach((rec) => {
+            recTotalH += doc.heightOfString(`• ${rec}`, { width: pWidth - 100 }) + 5;
+          });
+        }
+
+        if (doc.y + recTotalH > pHeight - 50) {
           doc.addPage({ size: 'A4', layout: 'portrait', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
           doc.y = 50;
         }
@@ -383,9 +427,52 @@ export const generateCertificatePDF = async (certificate, writeStream) => {
         doc.fillColor('#1e293b').font('Helvetica').fontSize(8.5);
         if (report.recommendations && report.recommendations.length > 0) {
           report.recommendations.forEach((rec) => {
+            if (doc.y > pHeight - 60) {
+              doc.addPage({ size: 'A4', layout: 'portrait', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
+              doc.y = 50;
+            }
             doc.text(`• ${rec}`, 50, doc.y, { width: pWidth - 100 });
             doc.y += doc.heightOfString(`• ${rec}`, { width: pWidth - 100 }) + 5;
           });
+        }
+
+        // Add running headers & page footers to all report pages (Pages 2+)
+        const range = doc.bufferedPageRange();
+        for (let i = 1; i < range.count; i++) {
+          doc.switchToPage(i);
+
+          const oldMargin = doc.page.margins.bottom;
+          doc.page.margins.bottom = 0;
+
+          // Footer divider line
+          doc.moveTo(50, doc.page.height - 40)
+             .lineTo(doc.page.width - 50, doc.page.height - 40)
+             .lineWidth(0.5)
+             .stroke('#cbd5e1');
+
+          // Left footer
+          doc.fillColor('#64748b')
+             .font('Helvetica')
+             .fontSize(8)
+             .text(
+               `C³AB CERTIFY — Official Report  |  Certificate ID: ${certificate.certificateId}`,
+               50,
+               doc.page.height - 30,
+               { lineBreak: false }
+             );
+
+          // Right footer (Page X of Y)
+          doc.fillColor('#64748b')
+             .font('Helvetica-Bold')
+             .fontSize(8)
+             .text(
+               `Page ${i} of ${range.count - 1}`,
+               doc.page.width - 150,
+               doc.page.height - 30,
+               { align: 'right', width: 100, lineBreak: false }
+             );
+
+          doc.page.margins.bottom = oldMargin;
         }
       }
 
