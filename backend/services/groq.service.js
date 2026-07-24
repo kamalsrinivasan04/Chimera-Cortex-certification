@@ -22,7 +22,7 @@ const generateMockQuestions = (profile) => {
   const questionTypes = ['MCQ', 'MSQ', 'Short', 'Long', 'Scenario', 'Logical', 'Analytical'];
   const questions = [];
 
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 20; i++) {
     const type = questionTypes[(i - 1) % questionTypes.length];
     const topic = mockTopics[(i - 1) % mockTopics.length];
 
